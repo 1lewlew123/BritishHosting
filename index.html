@@ -3,65 +3,164 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>British Hosting - Order Your FiveM Server</title>
+  <title>British Hosting - FiveM Servers</title>
   <style>
     body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0e0e0e;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
+      padding: 0;
+      color: #222;
+    }
+    header {
+      background: #003366;
+      padding: 15px 20px;
       text-align: center;
     }
-
+    header img {
+      height: 60px;
+    }
+    main {
+      max-width: 600px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgb(0 0 0 / 0.1);
+    }
     h1 {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      color: #d8b400;
+      margin-bottom: 10px;
+      color: #003366;
     }
-
-    form {
-      background: #1c1c1c;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
-    }
-
-    select, button {
-      font-size: 1rem;
-      padding: 0.5rem;
-      margin-top: 1rem;
-      border: none;
+    .plan {
+      border: 1px solid #ddd;
+      padding: 20px;
       border-radius: 6px;
+      margin-bottom: 20px;
     }
-
+    .plan h2 {
+      margin: 0 0 10px;
+      font-size: 1.5rem;
+      color: #0070f3;
+    }
+    .plan p {
+      margin: 0 0 15px;
+      font-size: 1.1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+    input[type="text"],
+    input[type="email"],
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
     button {
-      background-color: #d8b400;
-      color: #000;
+      background: #0070f3;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 1rem;
+      border-radius: 5px;
       cursor: pointer;
-      transition: 0.2s ease;
     }
-
     button:hover {
-      background-color: #f4e451;
+      background: #005bb5;
+    }
+    .paypal-button-container {
+      margin-top: 20px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h1>Welcome to British Hosting</h1>
-  <form id="orderForm">
-    <label for="plan">Select Plan:</label><br>
-    <select id="plan" name="plan">
-      <option value="Small Server">Small Server</option>
-      <option value="Medium Server">Medium Server</option>
-      <option value="Large Server">Large Server</option>
-    </select><br><br>
-    <button type="button" id="orderBtn">Order Server</button>
-  </form>
-  <script src="payment.js"></script>
+  <header>
+    <img src="https://share.icloud.com/photos/098rXVvPSEu3-PuvLmU3HYiWA" alt="British Hosting Logo" />
+  </header>
+  <main>
+    <h1>FiveM Server Plans</h1>
+    <div class="plan">
+      <h2>Basic Server</h2>
+      <p>10 Slots | 2 GB RAM | Instant Setup</p>
+      <p><strong>Price: £10.00 / month</strong></p>
+    </div>
+
+    <h2>Order Your Server</h2>
+    <form id="orderForm">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" name="name" placeholder="Your full name" required />
+
+      <label for="email">Email Address</label>
+      <input type="email" id="email" name="email" placeholder="you@example.com" required />
+
+      <label for="slots">Server Slots</label>
+      <select id="slots" name="slots" required>
+        <option value="10">10 Slots</option>
+        <option value="20">20 Slots (+£5)</option>
+        <option value="30">30 Slots (+£10)</option>
+      </select>
+
+      <div class="paypal-button-container" id="paypal-button-container"></div>
+    </form>
+  </main>
+
+  <!-- Load the PayPal JavaScript SDK -->
+  <script src="https://www.paypal.com/sdk/js?client-id=YOUR_SANDBOX_CLIENT_ID&currency=GBP"></script>
+
+  <script>
+    const form = document.getElementById('orderForm');
+    const paypalButtonsContainer = document.getElementById('paypal-button-container');
+
+    // Disable PayPal button initially
+    paypalButtonsContainer.style.display = 'none';
+
+    form.addEventListener('change', () => {
+      // Show PayPal button once form is filled minimally
+      if (form.checkValidity()) {
+        paypalButtonsContainer.style.display = 'block';
+      } else {
+        paypalButtonsContainer.style.display = 'none';
+      }
+    });
+
+    paypal.Buttons({
+      createOrder: (data, actions) => {
+        // Calculate amount based on slots
+        const slots = form.slots.value;
+        let price = 10;
+        if (slots === '20') price = 15;
+        if (slots === '30') price = 20;
+
+        return actions.order.create({
+          purchase_units: [{
+            amount: {
+              value: price.toString(),
+              currency_code: 'GBP'
+            },
+            description: `${slots} slots FiveM server from British Hosting`
+          }]
+        });
+      },
+      onApprove: (data, actions) => {
+        return actions.order.capture().then(details => {
+          alert(`Thank you, ${form.name.value}! Your order for a ${form.slots.value} slot server is successful.`);
+          // TODO: Send order details + payment info to your backend for deployment
+          form.reset();
+          paypalButtonsContainer.style.display = 'none';
+        });
+      },
+      onError: err => {
+        alert('Payment failed or cancelled. Please try again.');
+        console.error(err);
+      }
+    }).render('#paypal-button-container');
+  </script>
 </body>
 </html>
